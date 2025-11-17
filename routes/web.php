@@ -1,17 +1,34 @@
 <?php
 
+use App\Http\Controllers\web\CatalogController;
+use App\Http\Controllers\web\FavoritesController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 
 Route::get('/', function () {
+    $products = [
+        ['id' => 1, 'icon' => '🦊', 'name' => 'Норковые шубы', 'description' => 'Роскошные шубы из натуральной норки премиум качества'],
+        ['id' => 2, 'icon' => '🧥', 'name' => 'Парки', 'description' => 'Модные и комфортные парки для холодной погоды'],
+        ['id' => 3, 'icon' => '👔', 'name' => 'Дубленки', 'description' => 'Стильные дубленки из натуральной кожи'],
+        ['id' => 4, 'icon' => '🎩', 'name' => 'Пальто', 'description' => 'Элегантные пальто для создания идеального образа'],
+        ['id' => 5, 'icon' => '❄️', 'name' => 'Пуховики', 'description' => 'Качественные пуховики с современным дизайном'],
+        ['id' => 6, 'icon' => '✨', 'name' => 'Жилеты', 'description' => 'Стильные жилеты для любого случая']
+    ];
+
     return Inertia::render('Welcome', [
         'canRegister' => Features::enabled(Features::registration()),
+        'products' => $products,
     ]);
 })->name('home');
 
+Route::get('/favorites', [FavoritesController::class, 'index'])->name('favorites');
+Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
 Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+Route::get('/test', function () {
+    return Inertia::render('main/AppHeadLogo');
+});
 require __DIR__.'/settings.php';

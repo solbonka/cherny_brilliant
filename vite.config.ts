@@ -3,6 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
 import { defineConfig } from 'vite';
+import Inspect from 'vite-plugin-inspect';
 
 export default defineConfig({
     plugins: [
@@ -23,5 +24,14 @@ export default defineConfig({
                 },
             },
         }),
+        Inspect(),
     ],
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: 'localhost',
+        },
+    },
 });
