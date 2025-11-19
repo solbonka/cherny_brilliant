@@ -163,7 +163,8 @@ onMounted(() => {
 
 <style scoped>
 .catalog-page {
-    padding: 120px 80px;
+    flex: 1;
+    padding: 150px 80px 100px;
     background: #ffffff;
 }
 
