@@ -162,6 +162,23 @@ onMounted(() => {
 </script>
 
 <style scoped>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.black-diamond-site {
+    font-family: 'Montserrat', 'Segoe UI', sans-serif;
+    background: #ffffff;
+    color: #000000;
+    overflow-x: hidden;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
 .catalog-page {
     flex: 1;
     padding: 150px 80px 100px;
@@ -172,6 +189,64 @@ onMounted(() => {
     font-size: 48px;
     font-weight: 700;
     letter-spacing: 3px;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mb-12 {
+    margin-bottom: 3rem;
+}
+
+.mb-4 {
+    margin-bottom: 1rem;
+}
+
+.mb-10 {
+    margin-bottom: 2.5rem;
+}
+
+.mt-20 {
+    margin-top: 5rem;
+}
+
+.text-4xl {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+}
+
+.font-extrabold {
+    font-weight: 800;
+}
+
+.uppercase {
+    text-transform: uppercase;
+}
+
+.text-gray-500 {
+    color: #6b7280;
+}
+
+.text-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-wrap {
+    flex-wrap: wrap;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.gap-4 {
+    gap: 1rem;
 }
 
 .categories {
@@ -206,6 +281,7 @@ onMounted(() => {
     color: #fff;
     overflow: hidden;
     transition: all 0.3s;
+    cursor: pointer;
 }
 
 .product-card:hover {
@@ -222,6 +298,11 @@ onMounted(() => {
     justify-content: center;
     font-size: 64px;
     position: relative;
+    transition: all 0.3s;
+}
+
+.product-card:hover .product-image {
+    background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
 }
 
 .favorite-btn {
@@ -238,6 +319,14 @@ onMounted(() => {
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    transition: all 0.3s;
+    z-index: 10;
+}
+
+.favorite-btn:hover {
+    transform: scale(1.15);
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .favorite-btn.active {
@@ -257,10 +346,246 @@ onMounted(() => {
     font-size: 22px;
     font-weight: 700;
     margin-bottom: 10px;
+    letter-spacing: 1px;
 }
 
 .product-description {
     font-size: 15px;
     color: #cccccc;
+    line-height: 1.6;
+}
+
+.empty-state {
+    padding: 80px 20px;
+}
+
+/* Медиазапросы для адаптивности */
+
+/* Планшеты и небольшие ноутбуки */
+@media (max-width: 1024px) {
+    .catalog-page {
+        padding: 150px 40px 80px;
+    }
+
+    .catalog-header h1 {
+        font-size: 40px;
+        letter-spacing: 2px;
+    }
+
+    .product-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+    }
+
+    .product-image {
+        height: 300px;
+        font-size: 56px;
+    }
+}
+
+/* Планшеты в портретной ориентации */
+@media (max-width: 768px) {
+    .catalog-page {
+        padding: 150px 25px 60px;
+    }
+
+    .catalog-header h1 {
+        font-size: 32px;
+        letter-spacing: 2px;
+    }
+
+    .text-4xl {
+        font-size: 1.875rem;
+        line-height: 2.25rem;
+    }
+
+    .text-lg {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+
+    .categories {
+        gap: 0.75rem;
+    }
+
+    .gap-4 {
+        gap: 0.75rem;
+    }
+
+    .btn-category {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+
+    .product-grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 25px;
+    }
+
+    .product-image {
+        height: 280px;
+        font-size: 52px;
+    }
+
+    .product-info {
+        padding: 25px;
+    }
+
+    .product-name {
+        font-size: 20px;
+    }
+
+    .product-description {
+        font-size: 14px;
+    }
+
+    .mb-12 {
+        margin-bottom: 2rem;
+    }
+
+    .mb-10 {
+        margin-bottom: 2rem;
+    }
+
+    .mt-20 {
+        margin-top: 3rem;
+    }
+
+    .empty-state {
+        padding: 60px 20px;
+    }
+}
+
+/* Мобильные устройства */
+@media (max-width: 480px) {
+    .catalog-page {
+        padding: 150px 15px 50px;
+    }
+
+    .catalog-header h1 {
+        font-size: 26px;
+        letter-spacing: 1.5px;
+    }
+
+    .text-4xl {
+        font-size: 1.5rem;
+        line-height: 2rem;
+    }
+
+    .text-lg {
+        font-size: 0.95rem;
+        line-height: 1.4rem;
+    }
+
+    .categories {
+        gap: 0.5rem;
+    }
+
+    .gap-4 {
+        gap: 0.5rem;
+    }
+
+    .btn-category {
+        padding: 8px 16px;
+        font-size: 13px;
+        border-radius: 8px;
+    }
+
+    .product-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .product-image {
+        height: 250px;
+        font-size: 48px;
+    }
+
+    .favorite-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 22px;
+        top: 12px;
+        right: 12px;
+    }
+
+    .product-info {
+        padding: 20px;
+    }
+
+    .product-name {
+        font-size: 18px;
+        margin-bottom: 8px;
+    }
+
+    .product-description {
+        font-size: 13px;
+    }
+
+    .mb-12 {
+        margin-bottom: 1.5rem;
+    }
+
+    .mb-10 {
+        margin-bottom: 1.5rem;
+    }
+
+    .mt-20 {
+        margin-top: 2rem;
+    }
+
+    .empty-state {
+        padding: 40px 15px;
+    }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 360px) {
+    .catalog-page {
+        padding: 150px 10px 40px;
+    }
+
+    .catalog-header h1 {
+        font-size: 22px;
+        letter-spacing: 1px;
+    }
+
+    .text-lg {
+        font-size: 0.9rem;
+    }
+
+    .btn-category {
+        padding: 7px 14px;
+        font-size: 12px;
+    }
+
+    .product-image {
+        height: 220px;
+        font-size: 42px;
+    }
+
+    .favorite-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+        top: 10px;
+        right: 10px;
+    }
+
+    .product-info {
+        padding: 15px;
+    }
+
+    .product-name {
+        font-size: 16px;
+    }
+
+    .product-description {
+        font-size: 12px;
+    }
 }
 </style>

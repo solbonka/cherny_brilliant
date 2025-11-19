@@ -482,11 +482,10 @@ header.scrolled {
     .header-container {
         padding: 15px 20px;
         grid-template-columns: 50px 1fr auto;
-        gap: 10px;
     }
 
     .logo-center {
-        min-width: auto;
+        min-width: 200px;
     }
 
     .header-actions {

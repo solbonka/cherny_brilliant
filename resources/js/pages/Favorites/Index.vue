@@ -6,13 +6,13 @@
             <MainHeader></MainHeader>
 
             <!-- Favorites Section -->
-            <section class="favorites-page">
-                <div class="favorites-header">
-                    <h1>ИЗБРАННОЕ</h1>
-                    <p v-if="favoriteProducts.length === 0" class="empty-message">
+            <section class="favorite-page">
+                <div class="favorite-header text-center mb-12">
+                    <h1 class="text-4xl sm:text-5xl font-extrabold uppercase mb-4">ИЗБРАННОЕ</h1>
+                    <p v-if="favoriteProducts.length === 0" class="text-gray-500 text-lg">
                         У вас пока нет избранных товаров
                     </p>
-                    <p v-else class="count-message">
+                    <p v-else class="text-gray-500 text-lg">
                         Товаров в избранном: {{ favoriteProducts.length }}
                     </p>
                 </div>
@@ -36,10 +36,10 @@
                     </div>
                 </div>
 
-                <div v-else class="empty-state">
+                <div v-else class="empty-state text-center mt-20">
                     <div class="empty-icon">🤍</div>
-                    <p>Добавьте товары в избранное на главной странице</p>
-                    <Link href="/" class="btn btn-primary">Перейти в каталог</Link>
+                    <p class="text-gray-500 text-lg mb-8">Добавьте товары в избранное на главной странице</p>
+                    <Link href="/" class="btn-category active">Перейти в каталог</Link>
                 </div>
             </section>
         </div>
@@ -114,47 +114,69 @@ onMounted(() => {
     flex-direction: column;
 }
 
-/* Favorites Section */
-.favorites-page {
+.favorite-page {
     flex: 1;
     padding: 150px 80px 100px;
     background: #ffffff;
 }
 
-.favorites-header {
-    text-align: center;
-    margin-bottom: 60px;
-}
-
-.favorites-header h1 {
-    font-size: 48px;
+.favorite-header h1 {
+    font-size: 34px;
     font-weight: 700;
-    margin-bottom: 20px;
     letter-spacing: 3px;
 }
 
-.empty-message {
-    font-size: 18px;
-    color: #666666;
+.text-center {
+    text-align: center;
 }
 
-.count-message {
-    font-size: 18px;
-    color: #333333;
-    font-weight: 500;
+.mb-12 {
+    margin-bottom: 3rem;
+}
+
+.mb-4 {
+    margin-bottom: 1rem;
+}
+
+.mb-8 {
+    margin-bottom: 2rem;
+}
+
+.mt-20 {
+    margin-top: 5rem;
+}
+
+.text-4xl {
+    font-size: 2.25rem;
+    line-height: 2.5rem;
+}
+
+.font-extrabold {
+    font-weight: 800;
+}
+
+.uppercase {
+    text-transform: uppercase;
+}
+
+.text-gray-500 {
+    color: #6b7280;
+}
+
+.text-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
 }
 
 .product-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 40px;
-    max-width: 1400px;
-    margin: 0 auto;
 }
 
 .product-card {
-    background: #000000;
-    color: #ffffff;
+    background: #000;
+    color: #fff;
     overflow: hidden;
     transition: all 0.3s;
     cursor: pointer;
@@ -162,7 +184,7 @@ onMounted(() => {
 
 .product-card:hover {
     transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
 }
 
 .product-image {
@@ -173,24 +195,28 @@ onMounted(() => {
     align-items: center;
     justify-content: center;
     font-size: 64px;
-    transition: all 0.3s;
     position: relative;
+    transition: all 0.3s;
+}
+
+.product-card:hover .product-image {
+    background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
 }
 
 .favorite-btn {
     position: absolute;
     top: 15px;
     right: 15px;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255,255,255,0.9);
     border: none;
     border-radius: 50%;
     width: 50px;
     height: 50px;
     font-size: 24px;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
     transition: all 0.3s;
     z-index: 10;
 }
@@ -208,10 +234,6 @@ onMounted(() => {
 @keyframes heartbeat {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.2); }
-}
-
-.product-card:hover .product-image {
-    background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
 }
 
 .product-info {
@@ -233,7 +255,6 @@ onMounted(() => {
 
 /* Empty State */
 .empty-state {
-    text-align: center;
     padding: 80px 20px;
 }
 
@@ -243,83 +264,140 @@ onMounted(() => {
     opacity: 0.3;
 }
 
-.empty-state p {
-    font-size: 20px;
-    color: #666666;
-    margin-bottom: 30px;
-}
-
-.btn {
-    padding: 18px 45px;
-    text-decoration: none;
-    font-size: 16px;
+.btn-category {
+    padding: 12px 30px;
+    border: 2px solid #000;
+    background: #fff;
+    color: #000;
+    border-radius: 10px;
     font-weight: 600;
-    border: 2px solid;
-    transition: all 0.3s;
-    letter-spacing: 1px;
     cursor: pointer;
-    background: none;
+    transition: all 0.3s;
+    text-decoration: none;
     display: inline-block;
 }
 
-.btn-primary {
-    background: #000000;
-    color: #ffffff;
-    border-color: #000000;
+.btn-category.active,
+.btn-category:hover {
+    background: #000;
+    color: #fff;
 }
 
-.btn-primary:hover {
-    background: transparent;
-    color: #000000;
-}
+/* Медиазапросы для адаптивности */
 
-/* Tablet Styles */
+/* Планшеты и небольшие ноутбуки */
 @media (max-width: 1024px) {
-    .favorites-page {
-        padding: 130px 40px 80px;
-    }
-
-    .favorites-header h1 {
-        font-size: 40px;
-    }
-}
-
-/* Mobile Styles */
-@media (max-width: 768px) {
-    .favorites-page {
-        padding: 110px 20px 60px;
-    }
-
-    .favorites-header h1 {
-        font-size: 32px;
+    .favorite-page {
+        padding: 150px 40px 80px;
     }
 
     .product-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 30px;
     }
 
     .product-image {
         height: 300px;
-    }
-
-    .empty-icon {
-        font-size: 80px;
-    }
-
-    .empty-state p {
-        font-size: 18px;
-    }
-
-    footer {
-        padding: 30px 20px;
+        font-size: 56px;
     }
 }
 
-/* Small Mobile */
-@media (max-width: 480px) {
-    .favorites-header h1 {
+/* Планшеты в портретной ориентации */
+@media (max-width: 768px) {
+    .favorite-page {
+        padding: 150px 25px 60px;
+    }
+
+    .favorite-header h1 {
         font-size: 28px;
+        letter-spacing: 2px;
+    }
+
+    .text-4xl {
+        font-size: 1.875rem;
+        line-height: 2.25rem;
+    }
+
+    .text-lg {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+
+    .product-grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 25px;
+    }
+
+    .product-image {
+        height: 280px;
+        font-size: 52px;
+    }
+
+    .product-info {
+        padding: 25px;
+    }
+
+    .product-name {
+        font-size: 20px;
+    }
+
+    .product-description {
+        font-size: 14px;
+    }
+
+    .empty-icon {
+        font-size: 100px;
+    }
+
+    .empty-state {
+        padding: 60px 20px;
+    }
+
+    .mb-12 {
+        margin-bottom: 2rem;
+    }
+
+    .mt-20 {
+        margin-top: 3rem;
+    }
+}
+
+/* Мобильные устройства */
+@media (max-width: 480px) {
+    .favorite-page {
+        padding: 150px 15px 50px;
+    }
+
+    .favorite-header h1 {
+        font-size: 24px;
+        letter-spacing: 1.5px;
+    }
+
+    .text-4xl {
+        font-size: 1.5rem;
+        line-height: 2rem;
+    }
+
+    .product-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .product-image {
+        height: 250px;
+        font-size: 48px;
+    }
+
+    .favorite-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 22px;
+        top: 12px;
+        right: 12px;
     }
 
     .product-info {
@@ -327,7 +405,78 @@ onMounted(() => {
     }
 
     .product-name {
+        font-size: 18px;
+        margin-bottom: 8px;
+    }
+
+    .product-description {
+        font-size: 13px;
+    }
+
+    .empty-state {
+        padding: 40px 15px;
+    }
+
+    .empty-icon {
+        font-size: 80px;
+        margin-bottom: 20px;
+    }
+
+    .btn-category {
+        padding: 10px 25px;
+        font-size: 14px;
+    }
+
+    .mb-12 {
+        margin-bottom: 1.5rem;
+    }
+
+    .mb-8 {
+        margin-bottom: 1.5rem;
+    }
+
+    .mt-20 {
+        margin-top: 2rem;
+    }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 360px) {
+    .favorite-page {
+        padding: 150px 10px 40px;
+    }
+
+    .favorite-header h1 {
         font-size: 20px;
+    }
+
+    .product-image {
+        height: 220px;
+        font-size: 42px;
+    }
+
+    .favorite-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+        top: 10px;
+        right: 10px;
+    }
+
+    .product-info {
+        padding: 15px;
+    }
+
+    .product-name {
+        font-size: 16px;
+    }
+
+    .product-description {
+        font-size: 12px;
+    }
+
+    .empty-icon {
+        font-size: 70px;
     }
 }
 </style>
