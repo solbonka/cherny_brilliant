@@ -76,7 +76,9 @@ window.addEventListener('storage', (e) => {
 
             <!-- Center: Logo -->
             <div class="logo-center">
-                <AppHeadLogo />
+                <Link href="/" class="logo-link">
+                    <AppHeadLogo />
+                </Link>
             </div>
 
             <div class="header-actions">
@@ -139,9 +141,11 @@ window.addEventListener('storage', (e) => {
             </div>
 
             <div class="search-filters">
-                <button class="filter-tag">Шубы</button>
-                <button class="filter-tag">Дубленки</button>
-                <button class="filter-tag">Пуховики</button>
+                <button class="filter-tag">Платье</button>
+                <button class="filter-tag">Юбка</button>
+                <button class="filter-tag">Рубашка</button>
+                <button class="filter-tag">Брюки</button>
+                <button class="filter-tag">Костюм</button>
             </div>
         </div>
     </div>
