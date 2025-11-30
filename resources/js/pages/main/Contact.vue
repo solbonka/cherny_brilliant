@@ -166,12 +166,12 @@ export default defineComponent({
             if (typeof window.ymaps !== 'undefined') {
                 window.ymaps.ready(() => {
                     const map = new window.ymaps.Map('yandex-map', {
-                        center: [51.834464, 107.584660],
+                        center: [51.824735, 107.592533],
                         zoom: 17,
                         controls: ['zoomControl', 'fullscreenControl']
                     });
 
-                    const placemark = new window.ymaps.Placemark([51.834464, 107.584660], {
+                    const placemark = new window.ymaps.Placemark([51.824735, 107.592533], {
                         balloonContent: '<strong>Наш салон</strong><br>ул. Балтахинова, 36<br>Ежедневно: 10:00 - 20:00',
                         hintContent: 'ул. Балтахинова, 36'
                     }, {
