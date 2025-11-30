@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\web;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -13,15 +14,9 @@ class FavoritesController extends Controller
      */
     public function index(): Response
     {
-        // Все доступные продукты (можно вынести в модель)
-        $products = [
-            ['id' => 1, 'icon' => '🦊', 'name' => 'Норковые шубы', 'description' => 'Роскошные шубы из натуральной норки премиум качества'],
-            ['id' => 2, 'icon' => '🧥', 'name' => 'Парки', 'description' => 'Модные и комфортные парки для холодной погоды'],
-            ['id' => 3, 'icon' => '👔', 'name' => 'Дубленки', 'description' => 'Стильные дубленки из натуральной кожи'],
-            ['id' => 4, 'icon' => '🎩', 'name' => 'Пальто', 'description' => 'Элегантные пальто для создания идеального образа'],
-            ['id' => 5, 'icon' => '❄️', 'name' => 'Пуховики', 'description' => 'Качественные пуховики с современным дизайном'],
-            ['id' => 6, 'icon' => '✨', 'name' => 'Жилеты', 'description' => 'Стильные жилеты для любого случая']
-        ];
+        $products = Product::with(['images' => function ($query) {
+            $query->orderBy('sort_order');
+        }])->get();
 
         return Inertia::render('Favorites/Index', [
             'products' => $products,

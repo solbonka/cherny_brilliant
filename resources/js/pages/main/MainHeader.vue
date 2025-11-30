@@ -1,32 +1,87 @@
 <script setup lang="ts">
-import {ref, computed, onMounted} from 'vue';
+import {ref, computed, onMounted, onUnmounted} from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
+import type { PageProps as InertiaPageProps } from '@inertiajs/core';
 import AppHeadLogo from "@/layouts/app/AppHeadLogo.vue";
 import { useFavoritesStore } from '@/stores/favorites';
+import { useCartStore } from '@/stores/cart'; // ✅ Добавить импорт
+import CategoryItem from "@/pages/Catalog/CategoryItem.vue";
+
+interface Category {
+    id: number;
+    name: string;
+    parent_id: number | null;
+    children?: Category[];
+}
+
+interface AppPageProps extends InertiaPageProps {
+    categories: {
+        id: number;
+        name: string;
+        parent_id: number | null;
+        children_recursive?: Category[];
+    }[];
+}
 
 const favoritesStore = useFavoritesStore();
+const cartStore = useCartStore(); // ✅ Инициализировать store корзины
 
 onMounted(() => {
     favoritesStore.load();
+    cartStore.load(); // ✅ Загрузить корзину при монтировании
 });
 
 const isSidebarOpen = ref<boolean>(false);
 const isScrolled = ref<boolean>(false);
 const isSearchOpen = ref<boolean>(false);
+const isCatalogOpen = ref(false);
 
 const favoritesCount = computed(() => favoritesStore.count);
+const cartCount = computed(() => cartStore.totalItems); // ✅ Вычисляемое свойство для количества товаров
 
-const page = usePage();
+const page = usePage<AppPageProps>();
+
+const categories = ref<Category[]>(page.props.categories.map((cat) => ({
+    ...cat,
+    children: cat.children_recursive ?? []
+})));
+
+console.log(categories.value);
+
 const isHomePage = computed(() => {
     return page.component === 'Main/Index' || page.url === '/' || page.url.startsWith('/?');
 });
 
+const isOnCatalogPage = computed(() => {
+    return page.component === 'Catalog/Index' || page.url === '/catalog' || page.url.startsWith('/catalog');
+});
+
 const toggleSidebar = (): void => {
     isSidebarOpen.value = !isSidebarOpen.value;
+    if (!isSidebarOpen.value) isCatalogOpen.value = false;
 };
 
 const toggleSearch = (): void => {
     isSearchOpen.value = !isSearchOpen.value;
+};
+
+const toggleCatalog = () => {
+    const wasOpen = isCatalogOpen.value;
+    isCatalogOpen.value = !isCatalogOpen.value;
+
+    if (!isOnCatalogPage.value && isCatalogOpen.value) {
+        const sidebarState = isSidebarOpen.value;
+        const catalogState = isCatalogOpen.value;
+
+        router.visit('/catalog', {
+            preserveState: false,
+            preserveScroll: true,
+            onBefore: () => {
+                sessionStorage.setItem('keepSidebarOpen', 'true');
+                sessionStorage.setItem('keepCatalogOpen', 'true');
+            }
+        });
+    }
 };
 
 const navigateToSection = (sectionId: string): void => {
@@ -53,14 +108,33 @@ const scrollToElement = (sectionId: string): void => {
     }
 };
 
-window.addEventListener('scroll', () => {
-    isScrolled.value = window.scrollY > 20;
-});
+onMounted(() => {
+    favoritesStore.load();
+    cartStore.load(); // ✅ Загрузка корзины
 
-window.addEventListener('storage', (e) => {
-    if (e.key === 'favorites') {
-        favoritesStore.load();
+    if (sessionStorage.getItem('keepSidebarOpen') === 'true') {
+        isSidebarOpen.value = true;
+        sessionStorage.removeItem('keepSidebarOpen');
     }
+    if (sessionStorage.getItem('keepCatalogOpen') === 'true') {
+        isCatalogOpen.value = true;
+        sessionStorage.removeItem('keepCatalogOpen');
+    }
+
+    const onScroll = () => isScrolled.value = window.scrollY > 20;
+    window.addEventListener('scroll', onScroll);
+
+    // ✅ Слушаем изменения в localStorage для синхронизации между вкладками
+    const onStorage = (e: StorageEvent) => {
+        if (e.key === 'favorites') favoritesStore.load();
+        if (e.key === 'cart') cartStore.load(); // ✅ Добавить слушатель для корзины
+    };
+    window.addEventListener('storage', onStorage);
+
+    onUnmounted(() => {
+        window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('storage', onStorage);
+    });
 });
 </script>
 
@@ -111,12 +185,13 @@ window.addEventListener('storage', (e) => {
                     <span v-if="favoritesCount > 0" class="badge">{{ favoritesCount }}</span>
                 </Link>
 
-                <!-- Cart -->
+                <!-- Cart ✅ ОБНОВЛЕНО -->
                 <Link href="/cart" class="icon-btn cart-icon">
                     <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M7 18C5.9 18 5.01 18.9 5.01 20C5.01 21.1 5.9 22 7 22C8.1 22 9 21.1 9 20C9 18.9 8.1 18 7 18ZM1 2V4H3L6.6 11.59L5.25 14.04C5.09 14.32 5 14.65 5 15C5 16.1 5.9 17 7 17H19V15H7.42C7.28 15 7.17 14.89 7.17 14.75L7.2 14.63L8.1 13H15.55C16.3 13 16.96 12.59 17.3 11.97L20.88 5.48C20.96 5.34 21 5.17 21 5C21 4.45 20.55 4 20 4H5.21L4.27 2H1ZM17 18C15.9 18 15.01 18.9 15.01 20C15.01 21.1 15.9 22 17 22C18.1 22 19 21.1 19 20C19 18.9 18.1 18 17 18Z" fill="currentColor"/>
                     </svg>
-                    <span class="badge">0</span>
+                    <!-- ✅ Показываем бейдж только если есть товары -->
+                    <span v-if="cartCount > 0" class="badge">{{ cartCount }}</span>
                 </Link>
             </div>
         </div>
@@ -153,13 +228,31 @@ window.addEventListener('storage', (e) => {
     <aside class="sidebar" :class="{ 'active': isSidebarOpen }">
         <nav class="sidebar-nav">
             <a @click="navigateToSection('home')" class="sidebar-link">Главная</a>
+            <div class="catalog-dropdown">
+                <button class="sidebar-link" @click="toggleCatalog">
+                    Каталог
+                    <span :class="{ 'arrow-up': isCatalogOpen, 'arrow-down': !isCatalogOpen }"></span>
+                </button>
+
+                <div v-if="isCatalogOpen" class="catalog-menu">
+                    <CategoryItem
+                        v-for="category in categories"
+                        :key="category.id"
+                        :category="category"
+                    />
+                </div>
+            </div>
             <a @click="navigateToSection('collection')" class="sidebar-link">Коллекция</a>
             <a @click="navigateToSection('about')" class="sidebar-link">О салоне</a>
             <a @click="navigateToSection('contact')" class="sidebar-link">Контакты</a>
-            <Link href="/catalog" @click="isSidebarOpen = false" class="sidebar-link">Каталог</Link>
             <Link href="/favorites" @click="isSidebarOpen = false" class="sidebar-link">
                 Избранное
                 <span v-if="favoritesCount > 0" class="sidebar-badge">{{ favoritesCount }}</span>
+            </Link>
+            <!-- ✅ ДОБАВИТЬ: Ссылка на корзину в сайдбаре -->
+            <Link href="/cart" @click="isSidebarOpen = false" class="sidebar-link">
+                Корзина
+                <span v-if="cartCount > 0" class="sidebar-badge">{{ cartCount }}</span>
             </Link>
         </nav>
     </aside>
@@ -539,5 +632,35 @@ header.scrolled {
         padding: 8px 16px;
         font-size: 13px;
     }
+}
+
+.catalog-dropdown {
+    display: flex;
+    flex-direction: column;
+}
+
+.catalog-dropdown .sidebar-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.catalog-menu {
+    display: flex;
+    flex-direction: column;
+    padding-left: 20px;
+    margin-top: 5px;
+}
+
+.arrow-up::after {
+    content: "▲";
+    margin-left: 5px;
+    font-size: 10px;
+}
+
+.arrow-down::after {
+    content: "▼";
+    margin-left: 5px;
+    font-size: 10px;
 }
 </style>

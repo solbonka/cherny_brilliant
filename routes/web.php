@@ -1,7 +1,11 @@
 <?php
 
+use App\Http\Controllers\web\CartController;
 use App\Http\Controllers\web\CatalogController;
+use App\Http\Controllers\web\CategoryController;
 use App\Http\Controllers\web\FavoritesController;
+use App\Http\Controllers\web\ProductController;
+use App\Http\Controllers\web\ProductImageController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -23,12 +27,22 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/favorites', [FavoritesController::class, 'index'])->name('favorites');
+Route::get('/cart', [CartController::class, 'index'])->name('cart');
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
+Route::get('/catalog/{product}', [CatalogController::class, 'show'])
+    ->name('catalog.product.show');
+Route::resource('categories', CategoryController::class)->middleware(['auth', 'verified']);
+Route::resource('products', ProductController::class)->middleware(['auth', 'verified']);
+Route::post('products/{product}', [ProductController::class, 'update'])->middleware(['auth', 'verified']);
+Route::delete('product-images/{image}', [ProductImageController::class, 'destroy'])
+    ->name('product-images.destroy')->middleware(['auth', 'verified']);
+Route::post('product-images/sort', [ProductImageController::class, 'updateSort'])
+    ->name('product-images.sort')->middleware(['auth', 'verified']);
 Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
+    return Inertia::render('Dashboard', []);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/test', function () {
-    return Inertia::render('main/AppHeadLogo');
+    return Inertia::render('main/AppHeadLogo', []);
 });
 require __DIR__.'/settings.php';

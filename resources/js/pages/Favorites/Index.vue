@@ -7,12 +7,12 @@
 
             <!-- Favorites Section -->
             <section class="favorite-page">
-                <div class="favorite-header text-center mb-12">
-                    <h1 class="text-4xl sm:text-5xl font-extrabold uppercase mb-4">ИЗБРАННОЕ</h1>
-                    <p v-if="favoriteProducts.length === 0" class="text-gray-500 text-lg">
+                <div class="favorite-header">
+                    <h1>ИЗБРАННОЕ</h1>
+                    <p v-if="favoriteProducts.length === 0" class="description">
                         У вас пока нет избранных товаров
                     </p>
-                    <p v-else class="text-gray-500 text-lg">
+                    <p v-else class="description">
                         Товаров в избранном: {{ favoriteProducts.length }}
                     </p>
                 </div>
@@ -20,7 +20,10 @@
                 <div v-if="favoriteProducts.length > 0" class="product-grid">
                     <div v-for="product in favoriteProducts" :key="product.id" class="product-card">
                         <div class="product-image">
-                            {{ product.icon }}
+                            <img
+                                :src="product.images.find(i => i.is_main)?.url || product.images[0]?.url || '/placeholder.jpg'"
+                                :alt="product.title"
+                            />
                             <button
                                 class="favorite-btn active"
                                 @click.stop="removeFavorite(product.id)"
@@ -30,16 +33,33 @@
                             </button>
                         </div>
                         <div class="product-info">
-                            <div class="product-name">{{ product.name }}</div>
-                            <div class="product-description">{{ product.description }}</div>
+                            <h3 class="product-name">{{ product.title }}</h3>
+                            <p v-if="product.description" class="product-description">
+                                {{ product.description }}
+                            </p>
+                            <div class="product-footer">
+                                <div class="product-price">
+                                    <span class="current-price">{{ product.price.toLocaleString() }} ₽</span>
+                                    <span v-if="product.old_price" class="old-price">
+                                        {{ product.old_price.toLocaleString() }} ₽
+                                    </span>
+                                </div>
+                                <button
+                                    class="add-to-cart-btn"
+                                    @click.stop="addToCart(product.id)"
+                                    :class="{ 'in-cart': cart.has(product.id) }"
+                                >
+                                    {{ cart.has(product.id) ? '✓ В корзине' : '🛒 В корзину' }}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div v-else class="empty-state text-center mt-20">
+                <div v-else class="empty-state">
                     <div class="empty-icon">🤍</div>
-                    <p class="text-gray-500 text-lg mb-8">Добавьте товары в избранное на главной странице</p>
-                    <Link href="/" class="btn-category active">Перейти в каталог</Link>
+                    <p class="empty-text">Добавьте товары в избранное в каталоге</p>
+                    <Link href="/catalog" class="btn-catalog">Перейти в каталог</Link>
                 </div>
             </section>
         </div>
@@ -51,48 +71,44 @@ import { ref, computed, onMounted } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import MainHeader from '@/pages/main/MainHeader.vue';
 import DefaultLayout from '@/pages/main/DefaultLayout.vue';
+import { useFavoritesStore } from '@/stores/favorites';
 
-// Типы данных
 interface Product {
     id: number;
-    icon: string;
-    name: string;
-    description: string;
+    title: string;
+    description: string | null;
+    price: number;
+    old_price: number | null;
+    images: { url: string; is_main: boolean }[];
 }
 
-// Props
-const props = defineProps<{
-    products: Product[];
-}>();
+const props = withDefaults(defineProps<{
+    products?: Product[];
+}>(), {
+    products: () => []
+});
 
-// Реактивные переменные
-const favorites = ref<Set<number>>(new Set());
+const favoritesStore = useFavoritesStore();
+const cart = ref<Set<number>>(new Set());
 
 // Вычисляемое свойство для фильтрации избранных товаров
 const favoriteProducts = computed(() => {
-    return props.products.filter(product => favorites.value.has(product.id));
+    return (props.products || []).filter(product =>
+        favoritesStore.items.includes(product.id)
+    );
 });
 
-// Методы
 const removeFavorite = (productId: number): void => {
-    favorites.value.delete(productId);
-    saveFavoritesToStorage();
+    favoritesStore.toggle(productId);
 };
 
-const saveFavoritesToStorage = (): void => {
-    localStorage.setItem('favorites', JSON.stringify(Array.from(favorites.value)));
+const addToCart = (productId: number): void => {
+    cart.value.add(productId);
+    cart.value = new Set(cart.value);
 };
 
-const loadFavoritesFromStorage = (): void => {
-    const saved = localStorage.getItem('favorites');
-    if (saved) {
-        favorites.value = new Set(JSON.parse(saved));
-    }
-};
-
-// Lifecycle hooks
 onMounted(() => {
-    loadFavoritesFromStorage();
+    favoritesStore.load();
 });
 </script>
 
@@ -117,145 +133,207 @@ onMounted(() => {
 .favorite-page {
     flex: 1;
     padding: 150px 80px 100px;
-    background: #ffffff;
+    background: #f8f8f8;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.favorite-header {
+    text-align: center;
+    margin-bottom: 60px;
 }
 
 .favorite-header h1 {
-    font-size: 34px;
+    font-size: 42px;
     font-weight: 700;
-    letter-spacing: 3px;
-}
-
-.text-center {
-    text-align: center;
-}
-
-.mb-12 {
-    margin-bottom: 3rem;
-}
-
-.mb-4 {
-    margin-bottom: 1rem;
-}
-
-.mb-8 {
-    margin-bottom: 2rem;
-}
-
-.mt-20 {
-    margin-top: 5rem;
-}
-
-.text-4xl {
-    font-size: 2.25rem;
-    line-height: 2.5rem;
-}
-
-.font-extrabold {
-    font-weight: 800;
-}
-
-.uppercase {
     text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
 }
 
-.text-gray-500 {
-    color: #6b7280;
-}
-
-.text-lg {
-    font-size: 1.125rem;
-    line-height: 1.75rem;
+.description {
+    font-size: 18px;
+    color: #666;
 }
 
 .product-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 40px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 30px;
 }
 
 .product-card {
-    background: #000;
-    color: #fff;
+    background: #ffffff;
+    border-radius: 16px;
     overflow: hidden;
-    transition: all 0.3s;
+    transition: all 0.4s ease;
     cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f0f0f0;
 }
 
 .product-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    border-color: #e0e0e0;
 }
 
 .product-image {
     width: 100%;
-    height: 350px;
-    background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+    aspect-ratio: 4 / 5;
+    background: #fafafa;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 64px;
     position: relative;
-    transition: all 0.3s;
+    overflow: hidden;
 }
 
-.product-card:hover .product-image {
-    background: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+.product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.product-card:hover .product-image img {
+    transform: scale(1.05);
 }
 
 .favorite-btn {
     position: absolute;
     top: 15px;
     right: 15px;
-    background: rgba(255,255,255,0.9);
+    background: rgba(255, 255, 255, 0.95);
     border: none;
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    font-size: 24px;
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.3s ease;
     z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .favorite-btn:hover {
-    transform: scale(1.15);
+    transform: scale(1.1);
     background: rgba(255, 255, 255, 1);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .favorite-btn.active {
-    animation: heartbeat 0.3s ease;
+    animation: heartbeat 0.4s ease;
 }
 
 @keyframes heartbeat {
     0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.2); }
+    25% { transform: scale(1.2); }
+    50% { transform: scale(1.1); }
+    75% { transform: scale(1.15); }
 }
 
 .product-info {
-    padding: 30px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .product-name {
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 10px;
-    letter-spacing: 1px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #000000;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 50px;
 }
 
 .product-description {
-    font-size: 15px;
-    color: #cccccc;
-    line-height: 1.6;
+    font-size: 14px;
+    color: #666666;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.product-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.product-price {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.current-price {
+    font-size: 22px;
+    font-weight: 700;
+    color: #000000;
+}
+
+.old-price {
+    font-size: 14px;
+    color: #999999;
+    text-decoration: line-through;
+}
+
+.add-to-cart-btn {
+    padding: 12px 20px;
+    background: #000000;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.add-to-cart-btn:hover {
+    background: #333333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.add-to-cart-btn.in-cart {
+    background: #4CAF50;
+}
+
+.add-to-cart-btn.in-cart:hover {
+    background: #45a049;
 }
 
 /* Empty State */
 .empty-state {
-    padding: 80px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 20px;
+    text-align: center;
 }
 
 .empty-icon {
@@ -264,85 +342,78 @@ onMounted(() => {
     opacity: 0.3;
 }
 
-.btn-category {
-    padding: 12px 30px;
-    border: 2px solid #000;
-    background: #fff;
-    color: #000;
-    border-radius: 10px;
+.empty-text {
+    font-size: 18px;
+    color: #999;
+    margin-bottom: 30px;
+}
+
+.btn-catalog {
+    padding: 14px 32px;
+    background: #000000;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
     text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
     display: inline-block;
 }
 
-.btn-category.active,
-.btn-category:hover {
-    background: #000;
-    color: #fff;
+.btn-catalog:hover {
+    background: #333333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-/* Медиазапросы для адаптивности */
-
-/* Планшеты и небольшие ноутбуки */
+/* Responsive */
 @media (max-width: 1024px) {
     .favorite-page {
         padding: 150px 40px 80px;
     }
 
-    .product-grid {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 30px;
+    .favorite-header h1 {
+        font-size: 36px;
     }
 
-    .product-image {
-        height: 300px;
-        font-size: 56px;
+    .product-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 25px;
     }
 }
 
-/* Планшеты в портретной ориентации */
 @media (max-width: 768px) {
     .favorite-page {
-        padding: 150px 25px 60px;
+        padding: 120px 25px 60px;
+    }
+
+    .favorite-header {
+        margin-bottom: 40px;
     }
 
     .favorite-header h1 {
         font-size: 28px;
-        letter-spacing: 2px;
     }
 
-    .text-4xl {
-        font-size: 1.875rem;
-        line-height: 2.25rem;
-    }
-
-    .text-lg {
-        font-size: 1rem;
-        line-height: 1.5rem;
+    .description {
+        font-size: 16px;
     }
 
     .product-grid {
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 25px;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 20px;
     }
 
-    .product-image {
-        height: 280px;
-        font-size: 52px;
+    .product-footer {
+        flex-direction: column;
+        align-items: stretch;
     }
 
-    .product-info {
-        padding: 25px;
-    }
-
-    .product-name {
-        font-size: 20px;
-    }
-
-    .product-description {
-        font-size: 14px;
+    .add-to-cart-btn {
+        width: 100%;
+        justify-content: center;
     }
 
     .empty-icon {
@@ -350,117 +421,27 @@ onMounted(() => {
     }
 
     .empty-state {
-        padding: 60px 20px;
-    }
-
-    .mb-12 {
-        margin-bottom: 2rem;
-    }
-
-    .mt-20 {
-        margin-top: 3rem;
+        padding: 80px 20px;
     }
 }
 
-/* Мобильные устройства */
 @media (max-width: 480px) {
     .favorite-page {
-        padding: 150px 15px 50px;
+        padding: 120px 15px 50px;
     }
 
     .favorite-header h1 {
         font-size: 24px;
-        letter-spacing: 1.5px;
+        letter-spacing: 1px;
     }
 
-    .text-4xl {
-        font-size: 1.5rem;
-        line-height: 2rem;
+    .description {
+        font-size: 14px;
     }
 
     .product-grid {
         grid-template-columns: 1fr;
-        gap: 20px;
-    }
-
-    .product-card:hover {
-        transform: translateY(-5px);
-    }
-
-    .product-image {
-        height: 250px;
-        font-size: 48px;
-    }
-
-    .favorite-btn {
-        width: 45px;
-        height: 45px;
-        font-size: 22px;
-        top: 12px;
-        right: 12px;
-    }
-
-    .product-info {
-        padding: 20px;
-    }
-
-    .product-name {
-        font-size: 18px;
-        margin-bottom: 8px;
-    }
-
-    .product-description {
-        font-size: 13px;
-    }
-
-    .empty-state {
-        padding: 40px 15px;
-    }
-
-    .empty-icon {
-        font-size: 80px;
-        margin-bottom: 20px;
-    }
-
-    .btn-category {
-        padding: 10px 25px;
-        font-size: 14px;
-    }
-
-    .mb-12 {
-        margin-bottom: 1.5rem;
-    }
-
-    .mb-8 {
-        margin-bottom: 1.5rem;
-    }
-
-    .mt-20 {
-        margin-top: 2rem;
-    }
-}
-
-/* Очень маленькие экраны */
-@media (max-width: 360px) {
-    .favorite-page {
-        padding: 150px 10px 40px;
-    }
-
-    .favorite-header h1 {
-        font-size: 20px;
-    }
-
-    .product-image {
-        height: 220px;
-        font-size: 42px;
-    }
-
-    .favorite-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 20px;
-        top: 10px;
-        right: 10px;
+        gap: 15px;
     }
 
     .product-info {
@@ -469,14 +450,28 @@ onMounted(() => {
 
     .product-name {
         font-size: 16px;
+        min-height: 44px;
     }
 
     .product-description {
-        font-size: 12px;
+        font-size: 13px;
+    }
+
+    .current-price {
+        font-size: 20px;
     }
 
     .empty-icon {
-        font-size: 70px;
+        font-size: 80px;
+    }
+
+    .empty-state {
+        padding: 60px 15px;
+    }
+
+    .btn-catalog {
+        padding: 12px 28px;
+        font-size: 14px;
     }
 }
 </style>
