@@ -7,6 +7,7 @@ use App\Http\Controllers\web\FavoritesController;
 use App\Http\Controllers\web\OrderController;
 use App\Http\Controllers\web\ProductController;
 use App\Http\Controllers\web\ProductImageController;
+use App\Http\Controllers\web\SearchController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -27,6 +28,7 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
+Route::get('/api/search-products', [SearchController::class, 'index']);
 Route::get('/favorites', [FavoritesController::class, 'index'])->name('favorites');
 Route::get('/cart', [CartController::class, 'index'])->name('cart');
 Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
