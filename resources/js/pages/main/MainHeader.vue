@@ -46,8 +46,6 @@ const categories = ref<Category[]>(page.props.categories.map((cat) => ({
     children: cat.children_recursive ?? []
 })));
 
-console.log(categories.value);
-
 const isHomePage = computed(() => {
     return page.component === 'Main/Index' || page.url === '/' || page.url.startsWith('/?');
 });

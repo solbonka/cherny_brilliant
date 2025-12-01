@@ -4,6 +4,7 @@ use App\Http\Controllers\web\CartController;
 use App\Http\Controllers\web\CatalogController;
 use App\Http\Controllers\web\CategoryController;
 use App\Http\Controllers\web\FavoritesController;
+use App\Http\Controllers\web\OrderController;
 use App\Http\Controllers\web\ProductController;
 use App\Http\Controllers\web\ProductImageController;
 use Illuminate\Support\Facades\Route;
@@ -28,6 +29,7 @@ Route::get('/', function () {
 
 Route::get('/favorites', [FavoritesController::class, 'index'])->name('favorites');
 Route::get('/cart', [CartController::class, 'index'])->name('cart');
+Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog');
 Route::get('/catalog/{product}', [CatalogController::class, 'show'])
     ->name('catalog.product.show');

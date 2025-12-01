@@ -19,39 +19,72 @@
 
                 <div v-if="favoriteProducts.length > 0" class="product-grid">
                     <div v-for="product in favoriteProducts" :key="product.id" class="product-card">
-                        <div class="product-image">
-                            <img
-                                :src="product.images.find(i => i.is_main)?.url || product.images[0]?.url || '/placeholder.jpg'"
-                                :alt="product.title"
-                            />
-                            <button
-                                class="favorite-btn active"
-                                @click.stop="removeFavorite(product.id)"
-                                title="Удалить из избранного"
-                            >
-                                ❤️
-                            </button>
-                        </div>
-                        <div class="product-info">
-                            <h3 class="product-name">{{ product.title }}</h3>
-                            <p v-if="product.description" class="product-description">
-                                {{ product.description }}
-                            </p>
-                            <div class="product-footer">
-                                <div class="product-price">
-                                    <span class="current-price">{{ product.price.toLocaleString() }} ₽</span>
-                                    <span v-if="product.old_price" class="old-price">
-                                        {{ product.old_price.toLocaleString() }} ₽
-                                    </span>
-                                </div>
+                        <!-- Кликабельная область (переход на страницу товара) -->
+                        <Link :href="`/catalog/${product.id}`" class="product-card-link">
+                            <div class="product-image">
+                                <img
+                                    :src="product.images.find(i => i.is_main)?.url || product.images[0]?.url || '/placeholder.jpg'"
+                                    :alt="product.title"
+                                />
                                 <button
-                                    class="add-to-cart-btn"
-                                    @click.stop="addToCart(product.id)"
-                                    :class="{ 'in-cart': cart.has(product.id) }"
+                                    class="favorite-btn active"
+                                    @click.prevent="removeFavorite(product.id)"
+                                    title="Удалить из избранного"
                                 >
-                                    {{ cart.has(product.id) ? '✓ В корзине' : '🛒 В корзину' }}
+                                    ❤️
                                 </button>
                             </div>
+                            <div class="product-info">
+                                <h3 class="product-name">{{ product.title }}</h3>
+                                <p v-if="product.description" class="product-description">
+                                    {{ product.description }}
+                                </p>
+                                <div class="product-footer">
+                                    <div class="product-price">
+                                        <span class="current-price">{{ product.price.toLocaleString() }} ₽</span>
+                                        <span v-if="product.old_price" class="old-price">
+                                            {{ product.old_price.toLocaleString() }} ₽
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </Link>
+
+                        <!-- Блок с корзиной (вне Link) -->
+                        <div class="cart-actions">
+                            <!-- Селектор количества (показываем только если товара нет в корзине) -->
+                            <div v-if="!cartStore.has(product.id)" class="quantity-selector" @click.stop>
+                                <button
+                                    class="quantity-btn"
+                                    @click="decreaseQuantity(product.id)"
+                                    :disabled="getQuantity(product.id) <= 1"
+                                >
+                                    −
+                                </button>
+                                <input
+                                    type="number"
+                                    class="quantity-input"
+                                    :value="getQuantity(product.id)"
+                                    @input="setQuantity(product.id, $event)"
+                                    min="1"
+                                    @click.stop
+                                />
+                                <button
+                                    class="quantity-btn"
+                                    @click="increaseQuantity(product.id)"
+                                >
+                                    +
+                                </button>
+                            </div>
+
+                            <!-- Кнопка добавления в корзину -->
+                            <button
+                                class="add-to-cart-btn"
+                                @click="addToCart(product, $event)"
+                                :class="{ 'in-cart': cartStore.has(product.id) }"
+                            >
+                                {{ cartStore.has(product.id) ? '✓ В корзине' : '🛒 В корзину' }}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -72,6 +105,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import MainHeader from '@/pages/main/MainHeader.vue';
 import DefaultLayout from '@/pages/main/DefaultLayout.vue';
 import { useFavoritesStore } from '@/stores/favorites';
+import { useCartStore } from '@/stores/cart'; // ✅ Добавить импорт
 
 interface Product {
     id: number;
@@ -89,7 +123,36 @@ const props = withDefaults(defineProps<{
 });
 
 const favoritesStore = useFavoritesStore();
-const cart = ref<Set<number>>(new Set());
+const cartStore = useCartStore(); // ✅ Инициализация store корзины
+
+// ✅ Хранилище количества для каждого товара
+const quantities = ref<Map<number, number>>(new Map());
+const addedToCart = ref(false);
+
+// ✅ Функции управления количеством
+const getQuantity = (productId: number) => {
+    return quantities.value.get(productId) || 1;
+};
+
+const increaseQuantity = (productId: number) => {
+    const current = getQuantity(productId);
+    quantities.value.set(productId, current + 1);
+};
+
+const decreaseQuantity = (productId: number) => {
+    const current = getQuantity(productId);
+    if (current > 1) {
+        quantities.value.set(productId, current - 1);
+    }
+};
+
+const setQuantity = (productId: number, event: Event) => {
+    const target = event.target as HTMLInputElement;
+    const value = parseInt(target.value) || 1;
+    if (value >= 1) {
+        quantities.value.set(productId, value);
+    }
+};
 
 // Вычисляемое свойство для фильтрации избранных товаров
 const favoriteProducts = computed(() => {
@@ -102,13 +165,26 @@ const removeFavorite = (productId: number): void => {
     favoritesStore.toggle(productId);
 };
 
-const addToCart = (productId: number): void => {
-    cart.value.add(productId);
-    cart.value = new Set(cart.value);
+// ✅ Обновленная функция добавления в корзину
+const addToCart = (product: Product, event: Event): void => {
+    event.stopPropagation();
+    const quantity = getQuantity(product.id);
+
+    // Добавляем товар нужное количество раз
+    for (let i = 0; i < quantity; i++) {
+        cartStore.add(product);
+    }
+
+    // Сбрасываем количество после добавления
+    quantities.value.set(product.id, 1);
+
+    addedToCart.value = true;
+    setTimeout(() => addedToCart.value = false, 2000);
 };
 
 onMounted(() => {
     favoritesStore.load();
+    cartStore.load(); // ✅ Загружаем корзину
 });
 </script>
 
@@ -168,15 +244,26 @@ onMounted(() => {
     border-radius: 16px;
     overflow: hidden;
     transition: all 0.4s ease;
-    cursor: pointer;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     border: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
 }
 
 .product-card:hover {
     transform: translateY(-8px);
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
     border-color: #e0e0e0;
+}
+
+/* ✅ Кликабельная область */
+.product-card-link {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    flex: 1;
+    cursor: pointer;
 }
 
 .product-image {
@@ -242,6 +329,7 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    flex: 1;
 }
 
 .product-name {
@@ -273,7 +361,7 @@ onMounted(() => {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-top: 8px;
+    margin-top: auto;
     padding-top: 16px;
     border-top: 1px solid #f0f0f0;
 }
@@ -296,34 +384,124 @@ onMounted(() => {
     text-decoration: line-through;
 }
 
+/* ✅ НОВЫЕ СТИЛИ: Блок корзины */
+.cart-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 20px 20px 20px;
+}
+
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    background: #ffffff;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.quantity-selector:hover {
+    border-color: #000000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.quantity-btn {
+    width: 40px;
+    height: 44px;
+    border: none;
+    background: #ffffff;
+    color: #000000;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-btn:first-child {
+    border-right: 1px solid #e0e0e0;
+}
+
+.quantity-btn:last-child {
+    border-left: 1px solid #e0e0e0;
+}
+
+.quantity-btn:hover:not(:disabled) {
+    background: #f5f5f5;
+    color: #000000;
+}
+
+.quantity-btn:active:not(:disabled) {
+    background: #000000;
+    color: #ffffff;
+}
+
+.quantity-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.quantity-input {
+    width: 60px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: #000000;
+    outline: none;
+    padding: 0 8px;
+}
+
+.quantity-input::-webkit-inner-spin-button,
+.quantity-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.quantity-input[type="number"] {
+    -moz-appearance: textfield;
+}
+
 .add-to-cart-btn {
-    padding: 12px 20px;
+    width: 100%;
+    padding: 14px 20px;
     background: #000000;
     color: #ffffff;
     border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
-    white-space: nowrap;
     display: flex;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .add-to-cart-btn:hover {
     background: #333333;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.add-to-cart-btn:active {
+    transform: translateY(0);
 }
 
 .add-to-cart-btn.in-cart {
-    background: #4CAF50;
-}
-
-.add-to-cart-btn.in-cart:hover {
-    background: #45a049;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    pointer-events: none;
 }
 
 /* Empty State */
@@ -411,9 +589,36 @@ onMounted(() => {
         align-items: stretch;
     }
 
+    .cart-actions {
+        padding: 0 15px 15px 15px;
+        gap: 10px;
+    }
+
+    .quantity-selector {
+        border-width: 2px;
+    }
+
+    .quantity-btn {
+        width: 36px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    .quantity-btn:first-child,
+    .quantity-btn:last-child {
+        border-width: 1px;
+    }
+
+    .quantity-input {
+        width: 50px;
+        height: 40px;
+        font-size: 15px;
+    }
+
     .add-to-cart-btn {
-        width: 100%;
-        justify-content: center;
+        padding: 12px 16px;
+        font-size: 14px;
+        letter-spacing: 0.3px;
     }
 
     .empty-icon {
@@ -459,6 +664,10 @@ onMounted(() => {
 
     .current-price {
         font-size: 20px;
+    }
+
+    .cart-actions {
+        padding: 0 15px 15px 15px;
     }
 
     .empty-icon {
